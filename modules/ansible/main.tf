@@ -2,7 +2,7 @@
 data "aws_security_groups" "Bastian_Host_SG" {
   filter {
     name = "tag:Name"
-    values = "BastionSG"
+    values = ["BastionSG"]
   }
 }
 
