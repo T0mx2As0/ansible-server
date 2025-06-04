@@ -29,12 +29,17 @@ resource "aws_route_table" "private_route" {
     nat_gateway_id = aws_nat_gateway.NATGW.id
   }
 }
-
-data "aws_subnet" "private_sub" {
-  filter {
-    name = "tag:Name"
-    values = [ "PrivateSub1" ]
+resource "aws_subnet" "PrivateSub" {
+  tags  = {
+    Name = "PrivateSub1"
   }
+  vpc_id = data.aws_vpc.vpc.id
+  cidr_block = "172.31.0.0/20"
+}
+
+resource "aws_route_table_association" "PrivateRoute" {
+  subnet_id = aws_subnet.PrivateSub.id
+  route_table_id = aws_route_table.private_route.id
 }
 
 module "Ansible" {
