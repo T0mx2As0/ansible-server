@@ -1,8 +1,50 @@
+# retrive the public subnet so the nat gateway can reach internet
+data "aws_subnet" "PublicSub1" {
+  tags = {
+    Name = "PublicSub1"
+  }
+}
+
+# This is the NAT gateway's public IP 
+
+resource "aws_eip" "Elastic_IP" {
+  domain = "vpc"
+  tags = {
+    Name = "My_Elastic_IP"
+  }
+}
+# set nat gateway to allow ansible server to navigate
+
+resource "aws_nat_gateway" "NATGW" {
+  tags = {
+    Name = "NAT GW"
+  }
+  connectivity_type = "public"
+  allocation_id     = aws_eip.Elastic_IP.id
+  subnet_id = data.aws_subnet.PublicSub1.id   # Deve essere pubblica
+}
+
+resource "aws_route_table" "private_route" {
+  vpc_id = data.aws_vpc.vpc.id
+  tags = {
+     Name = "PrivateRouteTable"
+  }
+  route {
+    cidr_block = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.NATGW.id
+  }
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = "local"
+
+  }
+}
+
 # retrive Bastian Host security group ID
 data "aws_security_group" "Bastian_Host_SG" {
   filter {
     name = "tag:Name"
-    values = ["BastionSG"]
+    values = ["Bastion_SG"]
   }
 }
 
@@ -51,7 +93,8 @@ resource "aws_instance" "ansibles_server" {
     ami = data.aws_ssm_parameter.ami.value
     key_name = var.key_name
     instance_type = var.instance_type
-    subnet_id = data.aws_subnet.PublicSub1.id
+    subnet_id = var.PrivateSub
     security_groups = [ aws_security_group.ansible_SG.id ]
     associate_public_ip_address = false
+    user_data = file("./modules/ansible/script_ansible.sh")
 }

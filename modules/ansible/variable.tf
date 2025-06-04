@@ -14,14 +14,10 @@ data "aws_ssm_parameter" "ami" {
    name = "image-ami"
 }
 
-data "aws_subnet" "PublicSub1" {
-  filter {
-    name = "tag:Name"
-    values = ["PrivateSub1"]
-  }
-}
-
-
 data "http" "my_ip" { # my public IP
   url = "https://ipv4.icanhazip.com"
+}
+
+variable "PrivateSub" {
+  type = string
 }
